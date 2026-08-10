@@ -4,6 +4,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge.jsx';
+import { formatHandymanRate } from '../utils/formatters.js';
 
 // Human-readable trade labels
 const CATEGORY_LABELS = {
@@ -72,8 +73,8 @@ export default function HandymanCard({ handyman }) {
       {/* Stats */}
       <div className="flex items-center gap-6 flex-shrink-0 text-right">
         <div>
-          <p className="text-sm font-semibold text-gray-900">€{parseFloat(hourly_rate).toFixed(2)}/hr</p>
-          <p className="text-xs text-gray-400">Hourly rate</p>
+          <p className="text-sm font-semibold text-gray-900">{formatHandymanRate(hourly_rate, category_id)}</p>
+          <p className="text-xs text-gray-400">{hourly_rate != null ? 'Hourly rate' : 'Pricing'}</p>
         </div>
         <div>
           <p className="text-sm font-semibold text-gray-900">{years_experience ?? 0}yr</p>

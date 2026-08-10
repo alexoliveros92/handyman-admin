@@ -19,6 +19,7 @@ import Layout from '../components/Layout.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import RejectModal from '../components/RejectModal.jsx';
 import { fetchHandyman, approveHandyman, rejectHandyman } from '../services/api.js';
+import { formatHandymanRate } from '../utils/formatters.js';
 
 const CATEGORY_LABELS = {
   plumbing:     'Plumbing',
@@ -212,8 +213,8 @@ export default function HandymanDetailPage() {
           {/* Stats strip */}
           <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-gray-100">
             <div>
-              <p className="text-xs text-gray-400">Hourly rate</p>
-              <p className="text-base font-semibold text-gray-900 mt-0.5">€{parseFloat(hourly_rate).toFixed(2)}</p>
+              <p className="text-xs text-gray-400">{hourly_rate != null ? 'Hourly rate' : 'Pricing'}</p>
+              <p className="text-base font-semibold text-gray-900 mt-0.5">{formatHandymanRate(hourly_rate, category_id)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400">Experience</p>

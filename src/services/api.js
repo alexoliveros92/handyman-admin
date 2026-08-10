@@ -75,3 +75,28 @@ export const approveHandyman = (id) =>
  */
 export const rejectHandyman = (id, reason) =>
   request('POST', `/admin/handymen/${id}/reject`, { reason });
+
+// ── Admin payout operations (manual payout tracking, Option B) ─────────────
+
+/**
+ * Fetch every handyman with at least one 'pending' payout booking,
+ * grouped with total owed and bank details.
+ */
+export const fetchPendingPayouts = () =>
+  request('GET', '/admin/payouts');
+
+/**
+ * Mark specific bookings as paid for a handyman, once the manual bank
+ * transfer has actually been sent outside the app.
+ * @param {string} handymanId
+ * @param {string[]} bookingIds
+ */
+export const markPayoutsPaid = (handymanId, bookingIds) =>
+  request('POST', `/admin/payouts/${handymanId}/mark-paid`, { bookingIds });
+
+/**
+ * Fetch already-paid bookings (most recent first) for the founder's
+ * own record-keeping/audit.
+ */
+export const fetchPayoutHistory = () =>
+  request('GET', '/admin/payouts/history');

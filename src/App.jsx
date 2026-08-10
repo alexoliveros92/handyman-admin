@@ -8,6 +8,7 @@ import { useAdminAuth } from './context/AuthContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import HandymanListPage from './pages/HandymanListPage.jsx';
 import HandymanDetailPage from './pages/HandymanDetailPage.jsx';
+import PayoutsPage from './pages/PayoutsPage.jsx';
 
 // Wraps any route that requires an admin secret.
 // If no secret is stored, redirect to /login — preserving the intended
@@ -38,6 +39,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <HandymanDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payouts"
+        element={
+          <ProtectedRoute>
+            <PayoutsPage />
           </ProtectedRoute>
         }
       />

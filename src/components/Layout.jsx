@@ -82,6 +82,22 @@ export default function Layout({ children }) {
               {label}
             </NavLink>
           ))}
+
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mb-2 mt-5">
+            Finance
+          </p>
+          <NavLink
+            to="/payouts"
+            className={({ isActive }) =>
+              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ` +
+              (isActive
+                ? 'bg-primary-50 text-primary-700 border-primary-200 border-opacity-100'
+                : 'text-gray-600 hover:bg-gray-50 border-transparent')
+            }
+          >
+            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-primary-500" />
+            Payouts
+          </NavLink>
         </nav>
 
         {/* Logout */}
