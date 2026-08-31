@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import HandymanListPage from './pages/HandymanListPage.jsx';
 import HandymanDetailPage from './pages/HandymanDetailPage.jsx';
 import PayoutsPage from './pages/PayoutsPage.jsx';
+import JobTypeRequestsPage from './pages/JobTypeRequestsPage.jsx';
 
 // Wraps any route that requires an admin secret.
 // If no secret is stored, redirect to /login — preserving the intended
@@ -47,6 +48,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <PayoutsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/job-type-requests"
+        element={
+          <ProtectedRoute>
+            <JobTypeRequestsPage />
           </ProtectedRoute>
         }
       />

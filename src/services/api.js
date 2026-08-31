@@ -100,3 +100,37 @@ export const markPayoutsPaid = (handymanId, bookingIds) =>
  */
 export const fetchPayoutHistory = () =>
   request('GET', '/admin/payouts/history');
+
+// ── Admin job type request operations ───────────────────────────────────────
+// Handyman-proposed job types (submitted from MyJobPricesScreen) that aren't
+// in the fixed menu yet, awaiting admin review.
+
+/**
+ * Fetch job type requests filtered by status.
+ * @param {'pending'|'approved'|'rejected'|'all'} status
+ */
+export const fetchJobTypeRequests = (status) =>
+  request('GET', `/admin/job-type-requests?status=${status}`);
+
+/**
+ * Approve a job type request with the admin-confirmed (possibly edited)
+ * name/description. finalName is required server-side.
+ * @param {string} id
+ * @param {string} finalName
+ * @param {string} finalDescription
+ */
+export const approveJobTypeRequest = (id, finalName, finalDescription) =>
+  request('POST', `/admin/job-type-requests/${id}/approve`, {
+    finalName,
+    finalDescription,
+  });
+
+/**
+ * Reject a job type request. reason is optional, but we always send a body
+ * (even empty) so Content-Type is set and the backend's req.body.reason
+ * read never hits an undefined req.body.
+ * @param {string} id
+ * @param {string} [reason]
+ */
+export const rejectJobTypeRequest = (id, reason) =>
+  request('POST', `/admin/job-type-requests/${id}/reject`, { reason: reason || '' });
