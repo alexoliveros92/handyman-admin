@@ -30,10 +30,13 @@ const CATEGORY_LABELS = {
 };
 
 const DOCUMENT_TYPE_LABELS = {
-  national_id:  'National ID / Passport',
-  cv:           'CV / Work History',
-  certificate:  'Certificate',
-  other:        'Other document',
+  national_id:             'National ID / Passport',
+  cv:                      'CV',
+  certificate:             'Certificate',
+  other:                   'Other document',
+  antecedentes_policiacos: 'Antecedentes Policiacos',
+  antecedentes_penales:    'Antecedentes Penales',
+  rtu:                     'Constancia del RTU',
 };
 
 const formatDate = (iso) => {
