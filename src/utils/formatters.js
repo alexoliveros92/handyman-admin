@@ -7,6 +7,18 @@
  */
 export const formatPrice = (amount) => `Q ${Number(amount).toFixed(2)}`;
 
+// Spanish category labels, mirrored from handyman-mobile's
+// src/constants/strings.js (S.categories) so the dashboard names each trade
+// exactly as the app does. Keyed by the category_id values stored on the
+// handymen table.
+export const CATEGORY_LABELS = {
+  plumbing:     'Plomería',
+  electrical:   'Electricidad',
+  construction: 'Construcción',
+  smithy:       'Herrería',
+  gardening:    'Jardinería',
+};
+
 // Category -> pricing model, mirrored from handyman-mobile's
 // src/constants/categories.js (the source of truth for category_id values
 // actually stored on the handymen table). Determines whether a handyman

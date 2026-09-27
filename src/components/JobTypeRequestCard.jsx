@@ -3,17 +3,11 @@
 // navigate to a detail page — the approve/reject actions are handled inline
 // via modals owned by the parent page.
 
-const CATEGORY_LABELS = {
-  plumbing:     'Plomería',
-  electrician:  'Electricidad',
-  construction: 'Construcción',
-  smithy:       'Herrería',
-  gardening:    'Jardinería',
-};
+import { CATEGORY_LABELS } from '../utils/formatters.js';
 
 const CATEGORY_COLORS = {
   plumbing:     'bg-blue-100 text-blue-600',
-  electrician:  'bg-amber-100 text-amber-600',
+  electrical:   'bg-amber-100 text-amber-600',
   construction: 'bg-purple-100 text-purple-600',
   smithy:       'bg-red-100 text-red-600',
   gardening:    'bg-green-100 text-green-600',
@@ -21,7 +15,7 @@ const CATEGORY_COLORS = {
 
 const CATEGORY_INITIALS = {
   plumbing:     'PL',
-  electrician:  'EL',
+  electrical:   'EL',
   construction: 'CO',
   smithy:       'SM',
   gardening:    'GD',

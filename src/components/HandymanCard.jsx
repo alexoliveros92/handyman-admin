@@ -4,21 +4,12 @@
 
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge.jsx';
-import { formatHandymanRate } from '../utils/formatters.js';
-
-// Human-readable trade labels
-const CATEGORY_LABELS = {
-  plumbing:     'Plumbing',
-  electrician:  'Electrician',
-  construction: 'Construction',
-  smithy:       'Smithy',
-  gardening:    'Gardening',
-};
+import { formatHandymanRate, CATEGORY_LABELS } from '../utils/formatters.js';
 
 // Category accent colours for the icon column
 const CATEGORY_COLORS = {
   plumbing:     'bg-blue-100 text-blue-600',
-  electrician:  'bg-amber-100 text-amber-600',
+  electrical:   'bg-amber-100 text-amber-600',
   construction: 'bg-purple-100 text-purple-600',
   smithy:       'bg-red-100 text-red-600',
   gardening:    'bg-green-100 text-green-600',
@@ -27,7 +18,7 @@ const CATEGORY_COLORS = {
 // Category initials used inside the icon
 const CATEGORY_INITIALS = {
   plumbing:     'PL',
-  electrician:  'EL',
+  electrical:   'EL',
   construction: 'CO',
   smithy:       'SM',
   gardening:    'GD',

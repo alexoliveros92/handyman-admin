@@ -19,15 +19,7 @@ import Layout from '../components/Layout.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import RejectModal from '../components/RejectModal.jsx';
 import { fetchHandyman, approveHandyman, rejectHandyman } from '../services/api.js';
-import { formatHandymanRate } from '../utils/formatters.js';
-
-const CATEGORY_LABELS = {
-  plumbing:     'Plumbing',
-  electrician:  'Electrician',
-  construction: 'Construction',
-  smithy:       'Smithy',
-  gardening:    'Gardening',
-};
+import { formatHandymanRate, CATEGORY_LABELS } from '../utils/formatters.js';
 
 const DOCUMENT_TYPE_LABELS = {
   national_id:             'National ID / Passport',
