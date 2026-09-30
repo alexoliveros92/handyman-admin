@@ -45,6 +45,21 @@ const request = async (method, path, body = null) => {
   return data;
 };
 
+/**
+ * Check an admin secret against the backend before it is stored, so a wrong
+ * secret never renders the dashboard. Resolves true/false; throws only on
+ * network or server errors.
+ * @param {string} secret
+ */
+export const verifyAdminSecret = async (secret) => {
+  const response = await fetch(`${BASE_URL}/api/admin/handymen?status=pending`, {
+    headers: { 'x-admin-secret': secret },
+  });
+  if (response.status === 401 || response.status === 403) return false;
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return true;
+};
+
 // ── Admin handyman operations ─────────────────────────────────────────────────
 
 /**

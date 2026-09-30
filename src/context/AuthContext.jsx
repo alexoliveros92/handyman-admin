@@ -5,9 +5,9 @@
 // (which deals with Supabase JWTs, user profiles, and role detection).
 // The admin dashboard only needs one thing: is a valid admin secret stored?
 //
-// Security model: the admin secret is validated lazily — the first API
-// call that fails with 401 tells you the stored secret is wrong. This is
-// acceptable for an internal tool used by a small trusted team.
+// Security model: LoginPage checks the secret with the backend before
+// calling login(). Pages still log out on a 401 in case the secret is
+// rotated on the server while one is stored.
 
 import { createContext, useContext, useState, useCallback } from 'react';
 

@@ -1,26 +1,40 @@
 // src/pages/LoginPage.jsx
-// Accepts the admin secret and calls AuthContext.login() to store it.
-// No server call happens here — invalid secrets fail on the first real
-// data request (a clear 401 Unauthorized from the backend).
+// Checks the admin secret with the backend, then calls AuthContext.login()
+// to store it. A wrong secret is never stored, so the dashboard never renders.
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AuthContext.jsx';
+import { verifyAdminSecret } from '../services/api.js';
 
 export default function LoginPage() {
   const { login } = useAdminAuth();
   const navigate = useNavigate();
   const [secret, setSecret] = useState('');
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!secret.trim()) {
+    const trimmed = secret.trim();
+    if (!trimmed) {
       setError('Please enter the admin secret.');
       return;
     }
-    login(secret.trim());
-    navigate('/handymen/pending', { replace: true });
+
+    setChecking(true);
+    try {
+      if (!(await verifyAdminSecret(trimmed))) {
+        setError('Incorrect admin secret.');
+        return;
+      }
+      login(trimmed);
+      navigate('/handymen/pending', { replace: true });
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
@@ -65,12 +79,14 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              disabled={checking}
               className="w-full py-2.5 px-4 bg-primary-600 hover:bg-primary-700
                          text-white text-sm font-semibold rounded-lg
                          transition-colors duration-150 focus:outline-none
-                         focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
+                         focus:ring-2 focus:ring-primary-600 focus:ring-offset-2
+                         disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Sign in
+              {checking ? 'Checking…' : 'Sign in'}
             </button>
           </form>
         </div>
