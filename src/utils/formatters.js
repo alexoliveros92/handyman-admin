@@ -19,6 +19,11 @@ export const CATEGORY_LABELS = {
   gardening:    'Jardinería',
 };
 
+// The four categories whose handymen can offer each other's job types
+// (item B). Mirrors CROSS_CATEGORY_IDS in handyman-backend's
+// src/constants/categories.js. Gardening is excluded both ways.
+export const CROSS_CATEGORY_IDS = ['plumbing', 'electrical', 'construction', 'smithy'];
+
 // Category -> pricing model, mirrored from handyman-mobile's
 // src/constants/categories.js (the source of truth for category_id values
 // actually stored on the handymen table). Determines whether a handyman

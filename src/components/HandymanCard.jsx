@@ -33,8 +33,11 @@ const formatDate = (iso) => {
 
 export default function HandymanCard({ handyman }) {
   const navigate = useNavigate();
-  const { id, category_id, hourly_rate, years_experience, city, status, created_at, profile } = handyman;
+  const { id, category_id, hourly_rate, years_experience, city, status, created_at, profile,
+          extra_categories = [] } = handyman;
   const name     = profile?.full_name || 'Unknown';
+  // Item B: active extra categories the handyman declared in Mis Precios
+  const activeExtras = extra_categories.filter((e) => !e.revoked_at);
   const initials = CATEGORY_INITIALS[category_id] || '??';
   const color    = CATEGORY_COLORS[category_id]    || 'bg-gray-100 text-gray-600';
 
@@ -59,6 +62,16 @@ export default function HandymanCard({ handyman }) {
           {CATEGORY_LABELS[category_id] || category_id}
           {city ? ` · ${city}` : ''}
         </p>
+        {activeExtras.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {activeExtras.map((e) => (
+              <span key={e.category_id}
+                className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[11px] font-medium">
+                +{CATEGORY_LABELS[e.category_id] || e.category_id}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Stats */}

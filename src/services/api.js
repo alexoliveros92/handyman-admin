@@ -133,11 +133,14 @@ export const fetchJobTypeRequests = (status) =>
  * @param {string} id
  * @param {string} finalName
  * @param {string} finalDescription
+ * @param {string|null} [categoryId] — only when moving the new job type to
+ *   another of the 4 cross categories; null keeps the requested category.
  */
-export const approveJobTypeRequest = (id, finalName, finalDescription) =>
+export const approveJobTypeRequest = (id, finalName, finalDescription, categoryId = null) =>
   request('POST', `/admin/job-type-requests/${id}/approve`, {
     finalName,
     finalDescription,
+    ...(categoryId ? { categoryId } : {}),
   });
 
 /**
@@ -149,3 +152,26 @@ export const approveJobTypeRequest = (id, finalName, finalDescription) =>
  */
 export const rejectJobTypeRequest = (id, reason) =>
   request('POST', `/admin/job-type-requests/${id}/reject`, { reason: reason || '' });
+
+// ── Admin extra-category operations (item B) ────────────────────────────────
+// A handyman declares extra categories in the app's Mis Precios. Revoking one
+// switches off their prices in it (bookings are untouched); reinstating lets
+// them offer it again once they re-enter their prices.
+
+/**
+ * Revoke a handyman's extra category. The reason (min 10 chars, validated
+ * server-side) is sent to the handyman in a push notification.
+ * @param {string} handymanId
+ * @param {string} categoryId
+ * @param {string} reason
+ */
+export const revokeExtraCategory = (handymanId, categoryId, reason) =>
+  request('POST', `/admin/handymen/${handymanId}/extra-categories/${categoryId}/revoke`, { reason });
+
+/**
+ * Reinstate ("Restablecer") a revoked extra category. No body required.
+ * @param {string} handymanId
+ * @param {string} categoryId
+ */
+export const reinstateExtraCategory = (handymanId, categoryId) =>
+  request('POST', `/admin/handymen/${handymanId}/extra-categories/${categoryId}/reinstate`);

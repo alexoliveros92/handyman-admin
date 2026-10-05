@@ -14,6 +14,7 @@ import ApproveJobTypeModal from '../components/ApproveJobTypeModal.jsx';
 import RejectJobTypeModal from '../components/RejectJobTypeModal.jsx';
 import { fetchJobTypeRequests, approveJobTypeRequest, rejectJobTypeRequest } from '../services/api.js';
 import { useAdminAuth } from '../context/AuthContext.jsx';
+import { CATEGORY_LABELS } from '../utils/formatters.js';
 
 export default function JobTypeRequestsPage() {
   const { logout } = useAdminAuth();
@@ -48,14 +49,15 @@ export default function JobTypeRequestsPage() {
   };
 
   // ── Approve ────────────────────────────────────────────────────────────────
-  const handleApprove = async (finalName, finalDescription) => {
+  const handleApprove = async (finalName, finalDescription, categoryId) => {
     const { request } = modal;
     setActing(true);
     try {
-      await approveJobTypeRequest(request.id, finalName, finalDescription);
+      await approveJobTypeRequest(request.id, finalName, finalDescription, categoryId);
       removeRequest(request.id);
       setModal(null);
-      setMessage(`"${finalName}" fue aprobado y agregado al catálogo de servicios.`);
+      const finalCategory = CATEGORY_LABELS[categoryId || request.category_id] || categoryId || request.category_id;
+      setMessage(`"${finalName}" fue aprobado y agregado al catálogo de ${finalCategory}.`);
     } catch (err) {
       setMessage(`Error: ${err.message}`);
     } finally {

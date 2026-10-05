@@ -8,6 +8,8 @@
 //  - All uploaded documents as clickable links (signed URLs from the backend)
 //  - Approve button (immediate, no modal)
 //  - Reject button (opens RejectModal requiring a reason)
+//  - Extra categories the handyman declared (item B), each with Revoke
+//    (opens RevokeCategoryModal requiring a reason) or Reinstate
 //
 // After approve or reject, the component updates local state to reflect
 // the new status — the admin sees the change immediately without
@@ -18,8 +20,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import RejectModal from '../components/RejectModal.jsx';
-import { fetchHandyman, approveHandyman, rejectHandyman } from '../services/api.js';
-import { formatHandymanRate, CATEGORY_LABELS } from '../utils/formatters.js';
+import RevokeCategoryModal from '../components/RevokeCategoryModal.jsx';
+import {
+  fetchHandyman, approveHandyman, rejectHandyman,
+  revokeExtraCategory, reinstateExtraCategory,
+} from '../services/api.js';
+import { formatHandymanRate, CATEGORY_LABELS, CROSS_CATEGORY_IDS } from '../utils/formatters.js';
 
 const DOCUMENT_TYPE_LABELS = {
   national_id:             'National ID / Passport',
@@ -57,6 +63,7 @@ export default function HandymanDetailPage() {
   const [acting, setActing]           = useState(false);   // approve/reject in progress
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionMessage, setActionMessage]     = useState(null); // success feedback
+  const [revokeTarget, setRevokeTarget]       = useState(null); // category_id being revoked
 
   useEffect(() => {
     fetchHandyman(id)
@@ -95,6 +102,53 @@ export default function HandymanDetailPage() {
     }
   };
 
+  // ── Extra categories (item B) ──────────────────────────────────────────────
+  const updateExtraCategory = (categoryId, changes) => {
+    setHandyman((prev) => ({
+      ...prev,
+      extra_categories: (prev.extra_categories || []).map((e) =>
+        e.category_id === categoryId ? { ...e, ...changes } : e
+      ),
+    }));
+  };
+
+  const handleRevoke = async (reason) => {
+    const categoryId = revokeTarget;
+    setActing(true);
+    try {
+      const { deactivatedPrices } = await revokeExtraCategory(id, categoryId, reason);
+      updateExtraCategory(categoryId, { revoked_at: new Date().toISOString(), revoked_reason: reason });
+      setRevokeTarget(null);
+      setActionMessage(
+        `${CATEGORY_LABELS[categoryId]} revoked. ${deactivatedPrices} price(s) switched off; ` +
+        'existing bookings are unchanged. The handyman has been notified.'
+      );
+    } catch (err) {
+      setActionMessage(`Error: ${err.message}`);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleReinstate = async (categoryId) => {
+    const label = CATEGORY_LABELS[categoryId];
+    if (!window.confirm(
+      `Reinstate ${label}? The handyman can offer it again, but their prices stay hidden ` +
+      'until they save them again in Mis Precios.'
+    )) return;
+
+    setActing(true);
+    try {
+      await reinstateExtraCategory(id, categoryId);
+      updateExtraCategory(categoryId, { revoked_at: null, revoked_reason: null });
+      setActionMessage(`${label} reinstated. The handyman has been notified to re-enter their prices.`);
+    } catch (err) {
+      setActionMessage(`Error: ${err.message}`);
+    } finally {
+      setActing(false);
+    }
+  };
+
   // ── Loading / error states ─────────────────────────────────────────────────
   if (loading) {
     return (
@@ -119,7 +173,8 @@ export default function HandymanDetailPage() {
   }
 
   const { profile, category_id, bio, hourly_rate, years_experience, city,
-          status, created_at, rejection_reason, documents = [] } = handyman;
+          status, created_at, rejection_reason, documents = [],
+          extra_categories = [] } = handyman;
   const name     = profile?.full_name || 'Unknown';
   const isPending = status === 'pending';
 
@@ -253,6 +308,33 @@ export default function HandymanDetailPage() {
           </div>
         )}
 
+        {/* Extra categories (item B) — gardening handymen can't have any */}
+        {CROSS_CATEGORY_IDS.includes(category_id) && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">Extra categories</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Categories this handyman also offers, declared in Mis Precios. Their main
+              category stays {CATEGORY_LABELS[category_id]}.
+            </p>
+
+            {extra_categories.length === 0 ? (
+              <p className="text-sm text-gray-400">No extra categories declared.</p>
+            ) : (
+              <div className="space-y-3">
+                {extra_categories.map((e) => (
+                  <ExtraCategoryRow
+                    key={e.category_id}
+                    extra={e}
+                    acting={acting}
+                    onRevoke={() => setRevokeTarget(e.category_id)}
+                    onReinstate={() => handleReinstate(e.category_id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Documents */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">
@@ -284,7 +366,72 @@ export default function HandymanDetailPage() {
           loading={acting}
         />
       )}
+
+      {/* Revoke extra category modal */}
+      {revokeTarget && (
+        <RevokeCategoryModal
+          handymanName={name}
+          categoryLabel={CATEGORY_LABELS[revokeTarget] || revokeTarget}
+          onConfirm={handleRevoke}
+          onCancel={() => setRevokeTarget(null)}
+          loading={acting}
+        />
+      )}
     </Layout>
+  );
+}
+
+// ── ExtraCategoryRow sub-component ────────────────────────────────────────────
+// One declared extra category: declared date and declaration version, status,
+// and the Revoke / Reinstate action.
+
+function ExtraCategoryRow({ extra, acting, onRevoke, onReinstate }) {
+  const { category_id, declared_at, declaration_version, revoked_at, revoked_reason } = extra;
+  const isRevoked = !!revoked_at;
+
+  return (
+    <div className={`flex items-start gap-4 p-3.5 border rounded-xl ${
+      isRevoked ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'
+    }`}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-gray-800">{CATEGORY_LABELS[category_id] || category_id}</p>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+            isRevoked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}>
+            {isRevoked ? 'Revoked' : 'Active'}
+          </span>
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Declared {formatShortDate(declared_at)} · declaration {declaration_version || '—'}
+        </p>
+        {isRevoked && (
+          <p className="text-xs text-red-600 mt-1">
+            Revoked {formatShortDate(revoked_at)}{revoked_reason ? `: ${revoked_reason}` : ''}
+          </p>
+        )}
+      </div>
+
+      {isRevoked ? (
+        <button
+          onClick={onReinstate}
+          disabled={acting}
+          className="px-3 py-1.5 bg-white border border-gray-200 text-xs font-medium text-gray-700
+                     rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          Reinstate
+        </button>
+      ) : (
+        <button
+          onClick={onRevoke}
+          disabled={acting}
+          className="px-3 py-1.5 border border-red-200 text-xs font-medium text-red-600
+                     rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          Revoke
+        </button>
+      )}
+    </div>
   );
 }
 

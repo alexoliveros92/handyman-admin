@@ -48,6 +48,12 @@ export default function JobTypeRequestCard({ request, onApprove, onReject, actin
             <p className="text-sm font-semibold text-gray-900">{handymanName}</p>
             <span className="text-xs text-gray-400">·</span>
             <span className="text-xs text-gray-500">{CATEGORY_LABELS[category_id] || category_id}</span>
+            {/* Item B: a request can be in one of the handyman's extra categories */}
+            {handyman?.category_id && handyman.category_id !== category_id && (
+              <span className="text-xs text-gray-400">
+                (técnico de {CATEGORY_LABELS[handyman.category_id] || handyman.category_id})
+              </span>
+            )}
           </div>
           <p className="text-base font-semibold text-primary-700 mb-1">{proposed_name}</p>
           {proposed_description && (
