@@ -177,6 +177,8 @@ export default function HandymanDetailPage() {
           extra_categories = [] } = handyman;
   const name     = profile?.full_name || 'Unknown';
   const isPending = status === 'pending';
+  // 6b(a): accepted at sign-up (Terms §7, §11); the backend refuses to approve without it.
+  const conductAccepted = !!profile?.conduct_accepted_at;
 
   return (
     <Layout>
@@ -231,7 +233,8 @@ export default function HandymanDetailPage() {
                 </button>
                 <button
                   onClick={handleApprove}
-                  disabled={acting}
+                  disabled={acting || !conductAccepted}
+                  title={conductAccepted ? undefined : 'Conduct commitment not accepted'}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
                              rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
                 >
@@ -251,7 +254,8 @@ export default function HandymanDetailPage() {
             {status === 'rejected' && (
               <button
                 onClick={handleApprove}
-                disabled={acting}
+                disabled={acting || !conductAccepted}
+                title={conductAccepted ? undefined : 'Conduct commitment not accepted'}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
                            rounded-lg transition-colors disabled:opacity-50"
               >
@@ -288,6 +292,17 @@ export default function HandymanDetailPage() {
             <div className="flex items-center gap-3 text-sm">
               <span className="w-24 text-gray-400 flex-shrink-0">Registered</span>
               <span className="text-gray-900">{formatDate(profile?.created_at)}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="w-24 text-gray-400 flex-shrink-0">Conduct</span>
+              {conductAccepted ? (
+                <span className="text-gray-900">
+                  Accepted {formatDate(profile.conduct_accepted_at)}
+                  {profile.conduct_terms_version ? ` (${profile.conduct_terms_version})` : ''}
+                </span>
+              ) : (
+                <span className="text-red-600 font-medium">Not accepted at sign-up: cannot be approved</span>
+              )}
             </div>
           </div>
         </div>
