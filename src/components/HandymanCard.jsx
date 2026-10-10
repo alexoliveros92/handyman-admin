@@ -20,8 +20,8 @@ const CATEGORY_INITIALS = {
   plumbing:     'PL',
   electrical:   'EL',
   construction: 'CO',
-  smithy:       'SM',
-  gardening:    'GD',
+  smithy:       'HE',
+  gardening:    'JA',
 };
 
 const formatDate = (iso) => {
