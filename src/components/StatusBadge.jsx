@@ -1,11 +1,12 @@
 // src/components/StatusBadge.jsx
-// Colored pill component for pending / approved / rejected status.
+// Colored pill component for pending / approved / rejected / deleted status.
 // Used in HandymanCard and HandymanDetailPage.
 
 const CONFIG = {
   pending:  { label: 'Pending review', classes: 'bg-amber-50 text-amber-700 ring-amber-200' },
   approved: { label: 'Approved',       classes: 'bg-green-50 text-green-700 ring-green-200' },
   rejected: { label: 'Rejected',       classes: 'bg-red-50 text-red-700 ring-red-200' },
+  deleted:  { label: 'Deleted',        classes: 'bg-gray-100 text-gray-600 ring-gray-200' },
 };
 
 export default function StatusBadge({ status }) {

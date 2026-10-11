@@ -1,7 +1,7 @@
 // src/components/Layout.jsx
 // Persistent sidebar + main content wrapper for all admin pages.
 //
-// The sidebar shows three navigation items (Pending / Approved / Rejected)
+// The sidebar shows four navigation items (Pending / Approved / Rejected / Deleted)
 // and a logout button at the bottom. NavLink from React Router automatically
 // adds an active style when the link's URL matches the current page.
 
@@ -29,6 +29,13 @@ const NAV_ITEMS = [
     color: 'text-red-600',
     activeColor: 'bg-red-50 text-red-700 border-red-200',
     dot: 'bg-red-500',
+  },
+  {
+    status: 'deleted',
+    label: 'Deleted',
+    color: 'text-gray-500',
+    activeColor: 'bg-gray-100 text-gray-700 border-gray-200',
+    dot: 'bg-gray-400',
   },
 ];
 

@@ -15,16 +15,18 @@ const STATUS_LABELS = {
   pending:  'Pending review',
   approved: 'Approved',
   rejected: 'Rejected',
+  deleted:  'Deleted',
 };
 
 const STATUS_DESCRIPTIONS = {
   pending:  'Applicants waiting for your decision.',
   approved: 'Handymen visible in the marketplace.',
   rejected: 'Declined applications.',
+  deleted:  'Accounts deleted by the user (6b(b)). Anonymised; kept for booking and payout history.',
 };
 
 export default function HandymanListPage() {
-  const { status } = useParams(); // 'pending' | 'approved' | 'rejected'
+  const { status } = useParams(); // 'pending' | 'approved' | 'rejected' | 'deleted'
   const { logout } = useAdminAuth();
 
   const [handymen, setHandymen] = useState([]);
