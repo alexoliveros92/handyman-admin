@@ -39,6 +39,7 @@ const request = async (method, path, body = null) => {
   if (!response.ok) {
     const error = new Error(data.error || `HTTP ${response.status}`);
     error.status = response.status;
+    error.code = data.code;
     throw error;
   }
 
@@ -84,12 +85,31 @@ export const approveHandyman = (id) =>
   request('POST', `/admin/handymen/${id}/approve`);
 
 /**
- * Reject a handyman with a mandatory reason.
+ * Reject a pending handyman with a mandatory reason. Final: their documents
+ * are deleted (6b(c)). Calling it again on a rejected handyman retries only
+ * the document clean-up (error code DOCUMENTS_NOT_REMOVED).
  * @param {string} id
- * @param {string} reason — at least 10 characters (validated server-side)
+ * @param {string} reason — at least 20 characters (validated server-side)
  */
 export const rejectHandyman = (id, reason) =>
   request('POST', `/admin/handymen/${id}/reject`, { reason });
+
+/**
+ * Suspend an approved handyman (6b(c)). Resolves { affected: [...] }, the
+ * customers whose bookings / quote requests were cancelled, to email.
+ * Blockers come back as error.code (JOB_IN_PROGRESS, PENDING_PAYOUTS, …).
+ * @param {string} id
+ * @param {string} reason — admin-only, at least 10 characters
+ */
+export const suspendHandyman = (id, reason) =>
+  request('POST', `/admin/handymen/${id}/suspend`, { reason });
+
+/**
+ * Reactivate a suspended handyman (6b(c)). No body required.
+ * @param {string} id
+ */
+export const reactivateHandyman = (id) =>
+  request('POST', `/admin/handymen/${id}/reactivate`);
 
 // ── Admin payout operations (manual payout tracking, Option B) ─────────────
 

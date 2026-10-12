@@ -15,13 +15,15 @@ const STATUS_LABELS = {
   pending:  'Pending review',
   approved: 'Approved',
   rejected: 'Rejected',
+  suspended: 'Suspended',
   deleted:  'Deleted',
 };
 
 const STATUS_DESCRIPTIONS = {
   pending:  'Applicants waiting for your decision.',
   approved: 'Handymen visible in the marketplace.',
-  rejected: 'Declined applications.',
+  rejected: 'Declined applications. Final: their documents were deleted.',
+  suspended: 'Approved handymen you suspended (6b(c)). Hidden from customers; Reactivate from their page.',
   deleted:  'Accounts deleted by the user (6b(b)). Anonymised; kept for booking and payout history.',
 };
 

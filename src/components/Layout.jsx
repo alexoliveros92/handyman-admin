@@ -31,6 +31,13 @@ const NAV_ITEMS = [
     dot: 'bg-red-500',
   },
   {
+    status: 'suspended',
+    label: 'Suspended',
+    color: 'text-orange-600',
+    activeColor: 'bg-orange-50 text-orange-700 border-orange-200',
+    dot: 'bg-orange-500',
+  },
+  {
     status: 'deleted',
     label: 'Deleted',
     color: 'text-gray-500',

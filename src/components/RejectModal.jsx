@@ -1,13 +1,16 @@
 // src/components/RejectModal.jsx
 // Modal dialog that collects a rejection reason before confirming.
-// The reason is shown to the handyman on their rejected screen (Task 7)
-// so it must be specific and actionable.
+// The reason is shown to the handyman on their rejected screen (Task 7).
+// 6b(c): rejection is final and deletes their documents (Privacy §7).
+// The backend requires at least 20 characters.
+
+const MIN_LENGTH = 20;
 
 import { useState } from 'react';
 
 export default function RejectModal({ handymanName, onConfirm, onCancel, loading }) {
   const [reason, setReason] = useState('');
-  const isValid = reason.trim().length >= 10;
+  const isValid = reason.trim().length >= MIN_LENGTH;
 
   const handleConfirm = () => {
     if (!isValid) return;
@@ -27,9 +30,12 @@ export default function RejectModal({ handymanName, onConfirm, onCancel, loading
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Reject application</h2>
         <p className="text-sm text-gray-500 mb-5">
           Provide a reason that will be shown to{' '}
-          <span className="font-medium text-gray-700">{handymanName}</span>{' '}
-          so they know what to address before reapplying.
+          <span className="font-medium text-gray-700">{handymanName}</span> in the app.
         </p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-5 text-xs text-red-700 leading-relaxed">
+          Rejection is final. Their uploaded documents are deleted permanently (Privacy §7).
+          To apply again they must delete their account and register again.
+        </div>
 
         <label className="block text-sm font-medium text-gray-700 mb-1.5">
           Rejection reason
@@ -38,7 +44,7 @@ export default function RejectModal({ handymanName, onConfirm, onCancel, loading
           rows={4}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Submitted ID document appears expired. Please provide a valid government-issued ID and reapply."
+          placeholder="e.g. The submitted DPI is expired and the antecedentes penales are older than 6 months."
           autoFocus
           className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm resize-none
                      focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
@@ -46,8 +52,8 @@ export default function RejectModal({ handymanName, onConfirm, onCancel, loading
         />
 
         <div className="flex items-center justify-between mt-1 mb-5">
-          <p className={`text-xs ${reason.trim().length < 10 ? 'text-gray-400' : 'text-green-600'}`}>
-            {reason.trim().length}/10 characters minimum
+          <p className={`text-xs ${reason.trim().length < MIN_LENGTH ? 'text-gray-400' : 'text-green-600'}`}>
+            {reason.trim().length}/{MIN_LENGTH} characters minimum
           </p>
         </div>
 

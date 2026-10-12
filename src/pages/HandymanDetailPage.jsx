@@ -10,6 +10,10 @@
 //  - Reject button (opens RejectModal requiring a reason)
 //  - Extra categories the handyman declared (item B), each with Revoke
 //    (opens RevokeCategoryModal requiring a reason) or Reinstate
+//  - 6b(c): Suspend an approved handyman (SuspendModal; the backend refuses
+//    while a job is in progress or money is pending) and lists the customers
+//    to email; Reactivate a suspended one. Rejection is final (documents
+//    deleted), so there is no "Approve now" for rejected handymen.
 //
 // After approve or reject, the component updates local state to reflect
 // the new status — the admin sees the change immediately without
@@ -21,8 +25,10 @@ import Layout from '../components/Layout.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import RejectModal from '../components/RejectModal.jsx';
 import RevokeCategoryModal from '../components/RevokeCategoryModal.jsx';
+import SuspendModal from '../components/SuspendModal.jsx';
 import {
   fetchHandyman, approveHandyman, rejectHandyman,
+  suspendHandyman, reactivateHandyman,
   revokeExtraCategory, reinstateExtraCategory,
 } from '../services/api.js';
 import { formatHandymanRate, CATEGORY_LABELS, CROSS_CATEGORY_IDS } from '../utils/formatters.js';
@@ -64,6 +70,9 @@ export default function HandymanDetailPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [actionMessage, setActionMessage]     = useState(null); // success feedback
   const [revokeTarget, setRevokeTarget]       = useState(null); // category_id being revoked
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [affected, setAffected]               = useState(null); // customers to email after a suspension
+  const [retryRejectReason, setRetryRejectReason] = useState(null); // set when the document files weren't removed
 
   useEffect(() => {
     fetchHandyman(id)
@@ -92,9 +101,56 @@ export default function HandymanDetailPage() {
     setActing(true);
     try {
       await rejectHandyman(id, reason);
-      setHandyman((prev) => ({ ...prev, status: 'rejected', rejection_reason: reason }));
+      setHandyman((prev) => ({ ...prev, status: 'rejected', rejection_reason: reason, documents: [] }));
       setShowRejectModal(false);
-      setActionMessage('Application rejected. The reason has been saved and will be shown to the applicant.');
+      setRetryRejectReason(null);
+      setActionMessage('Application rejected and their documents deleted. The reason will be shown to the applicant.');
+    } catch (err) {
+      if (err.code === 'DOCUMENTS_NOT_REMOVED') {
+        // The rejection itself went through; only the files are left.
+        setHandyman((prev) => ({ ...prev, status: 'rejected', rejection_reason: reason, documents: [] }));
+        setShowRejectModal(false);
+        setRetryRejectReason(reason);
+      }
+      setActionMessage(`Error: ${err.message}`);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  // ── Suspend / reactivate (6b(c)) ───────────────────────────────────────────
+  const handleSuspend = async (reason) => {
+    setActing(true);
+    try {
+      const result = await suspendHandyman(id, reason);
+      setHandyman((prev) => ({
+        ...prev, status: 'suspended', suspension_reason: reason, suspended_at: new Date().toISOString(),
+      }));
+      setShowSuspendModal(false);
+      setAffected(result.affected || []);
+      setActionMessage(
+        'Handyman suspended. No push was sent: email the reason to the handyman and the affected customers below.'
+      );
+    } catch (err) {
+      setShowSuspendModal(false);
+      setActionMessage(`Error: ${err.message}`);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!window.confirm(
+      'Reactivate this handyman? They become visible and bookable again with their current prices. ' +
+      'Bookings cancelled by the suspension stay cancelled.'
+    )) return;
+
+    setActing(true);
+    try {
+      await reactivateHandyman(id);
+      setHandyman((prev) => ({ ...prev, status: 'approved', suspension_reason: null, suspended_at: null }));
+      setAffected(null);
+      setActionMessage('Handyman reactivated. Let them know by email.');
     } catch (err) {
       setActionMessage(`Error: ${err.message}`);
     } finally {
@@ -174,7 +230,7 @@ export default function HandymanDetailPage() {
 
   const { profile, category_id, bio, hourly_rate, years_experience, city,
           status, created_at, rejection_reason, documents = [],
-          extra_categories = [] } = handyman;
+          extra_categories = [], suspension_reason, suspended_at } = handyman;
   const name     = profile?.full_name || 'Unknown';
   const isPending = status === 'pending';
   // 6b(a): accepted at sign-up (Terms §7, §11); the backend refuses to approve without it.
@@ -250,16 +306,38 @@ export default function HandymanDetailPage() {
               </div>
             )}
 
-            {/* Re-approve option if previously rejected */}
-            {status === 'rejected' && (
+            {/* 6b(c): suspend an approved handyman */}
+            {status === 'approved' && (
               <button
-                onClick={handleApprove}
-                disabled={acting || !conductAccepted}
-                title={conductAccepted ? undefined : 'Conduct commitment not accepted'}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
-                           rounded-lg transition-colors disabled:opacity-50"
+                onClick={() => setShowSuspendModal(true)}
+                disabled={acting}
+                className="px-4 py-2 border border-orange-200 text-orange-700 text-sm font-medium
+                           rounded-lg hover:bg-orange-50 transition-colors disabled:opacity-50 flex-shrink-0"
               >
-                {acting ? 'Approving…' : 'Approve now'}
+                Suspend
+              </button>
+            )}
+
+            {status === 'suspended' && (
+              <button
+                onClick={handleReactivate}
+                disabled={acting}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold
+                           rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+              >
+                {acting ? 'Reactivating…' : 'Reactivate'}
+              </button>
+            )}
+
+            {/* Rejected but the document files are still there: retry the clean-up */}
+            {status === 'rejected' && retryRejectReason && (
+              <button
+                onClick={() => handleReject(retryRejectReason)}
+                disabled={acting}
+                className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium
+                           rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
+              >
+                {acting ? 'Retrying…' : 'Retry document deletion'}
               </button>
             )}
           </div>
@@ -323,6 +401,55 @@ export default function HandymanDetailPage() {
           </div>
         )}
 
+        {/* Suspension details (6b(c)) */}
+        {status === 'suspended' && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 mb-4">
+            <h2 className="text-sm font-semibold text-orange-800 mb-1.5">
+              Suspended {formatDate(suspended_at)}
+            </h2>
+            <p className="text-sm text-orange-700 leading-relaxed whitespace-pre-line">
+              {suspension_reason || '—'}
+            </p>
+            <p className="text-xs text-orange-600 mt-2">
+              Admin-only. For a permanent ban, delete the account (removes the documents).
+            </p>
+          </div>
+        )}
+
+        {/* Customers to email after a suspension (6b(c)) */}
+        {affected && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">Customers to email</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Their bookings / quote requests with this handyman were cancelled. Only shown now; copy it before leaving the page.
+            </p>
+            {affected.length === 0 ? (
+              <p className="text-sm text-gray-400">Nothing was open: no customer is affected.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-400">
+                    <th className="font-normal pb-2">Customer</th>
+                    <th className="font-normal pb-2">Email</th>
+                    <th className="font-normal pb-2">What</th>
+                    <th className="font-normal pb-2">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {affected.map((a) => (
+                    <tr key={`${a.kind}-${a.id}`}>
+                      <td className="py-2 text-gray-900">{a.full_name || '—'}</td>
+                      <td className="py-2 text-gray-700 select-all">{a.email || '—'}</td>
+                      <td className="py-2 text-gray-500">{a.kind === 'booking' ? 'Booking' : 'Quote request'}</td>
+                      <td className="py-2 text-gray-500">{a.job_date ? formatShortDate(a.job_date) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
         {/* Extra categories (item B) — gardening handymen can't have any */}
         {CROSS_CATEGORY_IDS.includes(category_id) && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
@@ -378,6 +505,16 @@ export default function HandymanDetailPage() {
           handymanName={name}
           onConfirm={handleReject}
           onCancel={() => setShowRejectModal(false)}
+          loading={acting}
+        />
+      )}
+
+      {/* Suspend modal (6b(c)) */}
+      {showSuspendModal && (
+        <SuspendModal
+          handymanName={name}
+          onConfirm={handleSuspend}
+          onCancel={() => setShowSuspendModal(false)}
           loading={acting}
         />
       )}
